@@ -5,12 +5,20 @@
         <div
           :class="['elevator', elevatorOnFloor]"
           @transitionend="moveElevator"
-        ></div>
+        >
+          <div class="buttons-in-elevator-container">
+            <button></button>
+            <button></button>
+            <button></button>
+            <button></button>
+            <button></button>
+          </div>
+        </div>
       </div>
 
       <div class="buttons-container">
         <button
-          v-for="floor in 5"
+          v-for="floor in floors"
           :key="floor"
           :class="[floorCalls[floor] ? 'button-called' : 'button-not-called']"
           :disabled="floorCalls[floor]"
@@ -24,15 +32,25 @@
 <script>
 import { defineComponent } from "vue";
 
+const watingTimer = 3_000;
+
 export default defineComponent({
   data() {
     return {
       floorQueue: [],
       floorCalls: {},
       inMove: false,
-      elevatorOnFloor: "floor-1",
       floorToMove: null,
+      elevatorPosition: 1,
+      direction: null,
+      floors: Array.from({ length: 5 }, (_, index) => 5 - index),
     };
+  },
+
+  computed: {
+    elevatorOnFloor() {
+      return `floor-${this.elevatorPosition}`;
+    },
   },
 
   watch: {
@@ -41,7 +59,7 @@ export default defineComponent({
         return;
       }
       if (!this.inMove) {
-        this.moveElevator();
+        this.startElevator();
       }
     },
   },
@@ -53,7 +71,7 @@ export default defineComponent({
       this.floorCalls[floor] = true;
     },
 
-    moveElevator() {
+    startElevator() {
       if (this.floorToMove) {
         this.floorCalls[this.floorToMove] = false;
       }
@@ -66,13 +84,40 @@ export default defineComponent({
 
       this.inMove = true;
 
-      setTimeout(() => {
-        const floor = this.floorQueue.shift();
+      const floor = this.floorQueue.shift();
 
-        this.elevatorOnFloor = `floor-${6 - floor}`;
+      this.floorToMove = floor;
 
-        this.floorToMove = floor;
-      }, 1000);
+      setTimeout(this.moveElevator, watingTimer);
+    },
+
+    moveElevator() {
+      if (this.floorToMove > this.elevatorPosition) {
+        this.direction = "up";
+      } else if (this.floorToMove < this.elevatorPosition) {
+        this.direction = "down";
+      } else {
+        this.direction = null;
+
+        return this.startElevator();
+      }
+
+      if (this.floorCalls[this.elevatorPosition]) {
+        this.floorCalls[this.elevatorPosition] = false;
+
+        this.floorQueue.splice(
+          this.floorQueue.indexOf(this.elevatorPosition),
+          1
+        );
+
+        return setTimeout(this.moveElevator, watingTimer);
+      }
+
+      if (this.direction === "up") {
+        this.elevatorPosition += 1;
+      } else {
+        this.elevatorPosition -= 1;
+      }
     },
   },
 });
@@ -114,7 +159,7 @@ export default defineComponent({
   background-color: brown;
   transition-property: all;
   transition-duration: 1.5s;
-  transition-timing-function: ease-in-out;
+  transition-timing-function: linear;
   grid-row: 5;
 }
 
@@ -155,5 +200,18 @@ export default defineComponent({
 
 .button-not-called {
   background-color: brown;
+}
+
+.buttons-in-elevator-container {
+  display: flex;
+  gap: 7px;
+  flex-direction: column;
+  justify-content: right;
+}
+
+.buttons-in-elevator-container > button {
+  border-radius: 50%;
+  height: 17px;
+  width: 17px;
 }
 </style>
