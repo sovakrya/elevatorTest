@@ -7,11 +7,13 @@
           @transitionend="moveElevator"
         >
           <div class="buttons-in-elevator-container">
-            <button></button>
-            <button></button>
-            <button></button>
-            <button></button>
-            <button></button>
+            <button
+              v-for="elevatorFloor in 5"
+              :key="elevatorFloor"
+              @click="insideElevatorCall(elevatorFloor)"
+            >
+              {{ elevatorFloor }}
+            </button>
           </div>
         </div>
       </div>
@@ -37,8 +39,10 @@ const watingTimer = 3_000;
 export default defineComponent({
   data() {
     return {
-      floorQueue: [],
       floorCalls: {},
+      floorCallsInsideElevator: {},
+      minFloor: null,
+      maxFloor: null,
       inMove: false,
       floorToMove: null,
       elevatorPosition: 1,
@@ -54,37 +58,64 @@ export default defineComponent({
   },
 
   watch: {
-    "floorQueue.length"(newValue, oldValue) {
-      if (newValue < oldValue) {
+    minFloor(floor) {
+      if (this.minFloor === null || this.inMove) {
         return;
       }
-      if (!this.inMove) {
-        this.startElevator();
+      this.startElevator(floor);
+    },
+
+    maxFloor(floor) {
+      if (this.maxFloor === null || this.inMove) {
+        return;
       }
+      this.startElevator(floor);
     },
   },
 
   methods: {
     elevatorCall(floor) {
-      this.floorQueue.push(floor);
-
       this.floorCalls[floor] = true;
+
+      this.handleElevatorCall(floor);
     },
 
-    startElevator() {
+    insideElevatorCall(floor) {
+      this.floorCallsInsideElevator[floor] = true;
+
+      this.handleElevatorCall(floor);
+    },
+
+    handleElevatorCall(floor) {
+      if (this.elevatorPosition > floor) {
+        if (this.minFloor === null || floor < this.minFloor) {
+          this.minFloor = floor;
+
+          return;
+        }
+      }
+
+      if (this.elevatorPosition < floor) {
+        if (this.maxFloor === null || floor > this.maxFloor) {
+          this.maxFloor = floor;
+
+          return;
+        }
+      }
+    },
+
+    startElevator(floor) {
       if (this.floorToMove) {
         this.floorCalls[this.floorToMove] = false;
       }
 
-      if (!this.floorQueue.length) {
+      if (!this.minFloor && !this.maxFloor) {
         this.inMove = false;
         this.floorToMove = null;
         return;
       }
 
       this.inMove = true;
-
-      const floor = this.floorQueue.shift();
 
       this.floorToMove = floor;
 
@@ -97,18 +128,37 @@ export default defineComponent({
       } else if (this.floorToMove < this.elevatorPosition) {
         this.direction = "down";
       } else {
-        this.direction = null;
+        if (this.direction === "up") {
+          let newFloorToMove = this.maxFloor;
+          this.direction = null;
 
-        return this.startElevator();
+          if (this.floorToMove === this.maxFloor) {
+            this.maxFloor = null;
+
+            newFloorToMove = this.minFloor;
+          }
+
+          return this.startElevator(newFloorToMove);
+        } else {
+          let newFloorToMove = this.minFloor;
+          this.direction = null;
+
+          if (this.floorToMove === this.minFloor) {
+            this.minFloor = null;
+
+            newFloorToMove = this.maxFloor;
+          }
+
+          return this.startElevator(newFloorToMove);
+        }
       }
 
-      if (this.floorCalls[this.elevatorPosition]) {
+      if (
+        this.floorCalls[this.elevatorPosition] ||
+        this.floorCallsInsideElevator[this.elevatorPosition]
+      ) {
         this.floorCalls[this.elevatorPosition] = false;
-
-        this.floorQueue.splice(
-          this.floorQueue.indexOf(this.elevatorPosition),
-          1
-        );
+        this.floorCallsInsideElevator[this.elevatorPosition] = false;
 
         return setTimeout(this.moveElevator, watingTimer);
       }
@@ -210,8 +260,8 @@ export default defineComponent({
 }
 
 .buttons-in-elevator-container > button {
-  border-radius: 50%;
-  height: 17px;
-  width: 17px;
+  border-radius: 30%;
+  height: 20px;
+  width: 20px;
 }
 </style>
