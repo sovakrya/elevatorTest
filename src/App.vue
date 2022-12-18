@@ -1,5 +1,11 @@
 <template>
   <div class="main-container">
+    <div class="elevator-font">
+      направление:
+      {{ direction === "up" ? "↑" : direction === "down" ? "↓" : "-" }}
+    </div>
+    <div class="elevator-font">этаж: {{ elevatorPositionExact }}</div>
+
     <div class="elevator-buttons-container">
       <div class="elevator_container">
         <div
@@ -10,6 +16,11 @@
             <button
               v-for="elevatorFloor in 5"
               :key="elevatorFloor"
+              :class="[
+                floorCallsInsideElevator[elevatorFloor]
+                  ? 'button-called'
+                  : 'button-not-called',
+              ]"
               @click="insideElevatorCall(elevatorFloor)"
             >
               {{ elevatorFloor }}
@@ -48,6 +59,7 @@ export default defineComponent({
       elevatorPosition: 1,
       direction: null,
       floors: Array.from({ length: 5 }, (_, index) => 5 - index),
+      elevatorPositionExact: 1,
     };
   },
 
@@ -123,6 +135,10 @@ export default defineComponent({
     },
 
     moveElevator() {
+      if (this.elevatorPosition !== this.elevatorPositionExact) {
+        this.elevatorPositionExact = this.elevatorPosition;
+      }
+
       if (this.floorToMove > this.elevatorPosition) {
         this.direction = "up";
       } else if (this.floorToMove < this.elevatorPosition) {
@@ -206,7 +222,7 @@ export default defineComponent({
 }
 
 .elevator {
-  background-color: brown;
+  background-color: rgb(110, 87, 87);
   transition-property: all;
   transition-duration: 1.5s;
   transition-timing-function: linear;
@@ -230,18 +246,28 @@ export default defineComponent({
 
 .floor-1 {
   translate: 0 calc((-100% - 16px) * 0);
+  display: flex;
+  min-height: 0;
 }
 .floor-2 {
   translate: 0 calc((-100% - 16px) * 1);
+  display: flex;
+  min-height: 0;
 }
 .floor-3 {
   translate: 0 calc((-100% - 16px) * 2);
+  display: flex;
+  min-height: 0;
 }
 .floor-4 {
   translate: 0 calc((-100% - 16px) * 3);
+  display: flex;
+  min-height: 0;
 }
 .floor-5 {
   translate: 0 calc((-100% - 16px) * 4);
+  display: flex;
+  min-height: 0;
 }
 
 .button-called {
@@ -249,7 +275,7 @@ export default defineComponent({
 }
 
 .button-not-called {
-  background-color: brown;
+  background-color: rgb(119, 6, 6);
 }
 
 .buttons-in-elevator-container {
@@ -257,11 +283,17 @@ export default defineComponent({
   gap: 7px;
   flex-direction: column;
   justify-content: right;
+  height: 140px;
+  flex-wrap: wrap;
 }
 
 .buttons-in-elevator-container > button {
   border-radius: 30%;
-  height: 20px;
-  width: 20px;
+  height: 40px;
+  width: 40px;
+}
+
+.elevator-font {
+  font-size: 30px;
 }
 </style>
