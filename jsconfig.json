@@ -1,13 +1,8 @@
 {
-    "compilerOptions": {
-        "target": "ESNext",
-        "isolatedModules": true,
-        "strict": true,
-        "noImplicitThis": true,
-        "baseUrl": ".",
-        "paths": {
-            "@/*": ["src/*"]
-        },
-        "jsx": "preserve"
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
     }
+  }
 }
